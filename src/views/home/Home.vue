@@ -1,65 +1,21 @@
 <template>
  <div id="home">
    <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
-   <home-swiper :banners="banners"/>
-   <recommend-view :recommends="recommends"/>
-   <feature-view/>
-   <tab-control class="tab-control" 
-   :titles="['流行','新款','精选']"
-   @tabClick="tabClick"/>
-   <good-list :goods="showGoods"/>
-   <ul>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-     <li></li>
-   </ul>
+   <scroll class="content" 
+           ref="scroll" 
+           :probe-type="3" 
+           @scroll="contentScroll" 
+           :pull-up-load="true" 
+           @pullingUp="loadMore">
+      <home-swiper :banners="banners"/>
+      <recommend-view :recommends="recommends"/>
+      <feature-view/>
+      <tab-control class="tab-control" 
+                  :titles="['流行','新款','精选']"
+                  @tabClick="tabClick"/>
+      <good-list :goods="showGoods"/>
+   </scroll>
+   <back-top @click.native="backClick" v-show="isShowBackTop"/>
  </div>
 </template>
  
@@ -70,8 +26,11 @@ import RecommendView from './childComps/RecommendView'
 import FeatureView from './childComps/FeatureView';
 import TabControl from 'components/content/tabControl/TabControl';
 import GoodList from 'components/content/goods/GoodsList'
+import Scroll from 'components/common/scroll/Scroll'
+import BackTop from 'components/content/backTop/BackTop'
 
 import {getHomeMultidata,getHomeGoods} from 'network/home';
+
 
 
 
@@ -87,7 +46,9 @@ export default {
    RecommendView,
    FeatureView,
    TabControl,
-   GoodList
+   GoodList,
+   Scroll,
+   BackTop
 
  },
  data(){
@@ -99,7 +60,8 @@ export default {
        'new':{page:0,list:[]},
        'sell':{page:0,list:[]},
      },
-     currentType:'pop'
+     currentType:'pop',
+     isShowBackTop:false
    }
  },
  computed:{
@@ -117,6 +79,17 @@ export default {
    this.getHomeGoods('sell')
  },
  methods: {
+   backClick(){
+     this.$refs.scroll.scrollTo(0,0,300)
+   },
+   contentScroll(position){
+     this.isShowBackTop = (-position.y) > 1000
+   },
+   loadMore(){
+     this.getHomeGoods(this.currentType)
+
+     this.$refs.scroll.scroll.refresh()
+   },
   /*
     事件监听额度相关方法
   */
@@ -150,6 +123,8 @@ export default {
       getHomeGoods(type,page).then(res=>{
         this.goods[type].list.push(...res.data.list)
         this.goods[type].page += 1
+
+        this.$refs.scroll.finishPullUp()
      })
    }
  },
@@ -159,6 +134,8 @@ export default {
 <style scoped>
   #home{
       padding-top: 44px;
+      height: 100vh;
+      position: relative;
   }
   .home-nav{
     background-color: var(--color-tint);
@@ -176,4 +153,18 @@ export default {
     z-index: 9;
     /* top: 100px; */
   }
+  .content{
+    /* height: 300px; */
+    overflow: hidden;
+    position:absolute;
+    top: 44px;
+    bottom: 49px;
+    left:0;
+    right: 0;
+  }
+  /* .content{
+    height: calc(100% - 93px);
+    overflow: hidden;
+    margin-top: 44px;
+  } */
 </style>
